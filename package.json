@@ -1,0 +1,16 @@
+{
+  "name": "agribot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.9",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "uuid": "^11.1.0"
+  }
+}

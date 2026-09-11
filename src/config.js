@@ -1,0 +1,38 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const REQUIRED_KEYS = [
+  'WHATSAPP_TOKEN',
+  'WHATSAPP_PHONE_NUMBER_ID',
+  'WHATSAPP_VERIFY_TOKEN',
+  'LANG_FLOW_ID',
+  'CROP_FLOW_ID',
+  'GEMINI_API_KEY',
+  'AGMARKET_KEY',
+  'OPENCAGE_KEY',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+];
+
+const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
+
+if (missing.length > 0) {
+  throw new Error(
+    `Missing required environment variables: ${missing.join(', ')}. Copy .env.example to .env and fill in every key.`
+  );
+}
+
+export const config = {
+  WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN,
+  WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
+  WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN,
+  LANG_FLOW_ID: process.env.LANG_FLOW_ID,
+  CROP_FLOW_ID: process.env.CROP_FLOW_ID,
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+  AGMARKET_KEY: process.env.AGMARKET_KEY,
+  OPENCAGE_KEY: process.env.OPENCAGE_KEY,
+  UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+  UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+  TRANSPORT_COST_PER_KM: process.env.TRANSPORT_COST_PER_KM || '2',
+};
