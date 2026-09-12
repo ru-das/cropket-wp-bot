@@ -5,14 +5,13 @@ import { onMenuSelected } from './handlers/onMenuSelected.js';
 import { onCropSelected } from './handlers/onCropSelected.js';
 import { onLocation } from './handlers/onLocation.js';
 import { sendText } from './services/whatsapp.js';
-import { t } from './services/translate.js';
-import { S } from './utils/strings.js';
+import { getString } from './utils/strings.js';
 import { logger } from './utils/logger.js';
 
 export async function handleGet(req, res) {
   try {
-    const mode      = req.query['hub.mode'];
-    const token     = req.query['hub.verify_token'];
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
     if (mode === 'subscribe' && token === process.env.WHATSAPP_VERIFY_TOKEN) {
       return res.status(200).send(challenge);
@@ -30,7 +29,7 @@ export async function handlePost(req, res) {
 
   try {
     const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    
+
     if (!message) {
       res.status(200).end();
       return;
@@ -39,33 +38,32 @@ export async function handlePost(req, res) {
     phone = message.from;
     session = await getSession(phone);
 
-    const text          = message.text?.body?.trim() ?? '';
-    const isGreeting    = /^(hi|hello|hey|start|नमस्ते|नमस्कार|हेलो|हैलो|হ্যালো|নমস্কার|আসসালামু\s*আলাইকুম|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
-    const isListReply   = message.type === 'interactive' && message.interactive?.type === 'list_reply';
+    const text = message.text?.body?.trim() ?? '';
+    const isGreeting = /^(hi|hello|hey|start|नमस्ते|नमस्कार|हेलो|हैलो|হ্যালো|নমস্কার|আসসালামু\s*আলাইকুম|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
+    const isListReply = message.type === 'interactive' && message.interactive?.type === 'list_reply';
     const isButtonReply = message.type === 'interactive' && message.interactive?.type === 'button_reply';
-    const isLocation    = message.type === 'location';
-    const buttonId      = message.interactive?.button_reply?.id ?? '';
+    const isLocation = message.type === 'location';
+    const buttonId = message.interactive?.button_reply?.id ?? '';
 
     logger.info('incoming', { phone, state: session.state, type: message.type, text });
 
-    if (session.state === 'INIT' || isGreeting)                                               await onGreeting(phone, session, message);
-    else if (session.state === 'LANG_SENT'     && isListReply)                                await onLangSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && isListReply)                                await onMenuSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && isButtonReply && buttonId === 'YES_CROP')  await onMenuSelected(phone, session, { type: 'interactive', interactive: { list_reply: { id: 'CROP_PRICES' } } });
-    else if (session.state === 'MENU_SENT'     && isButtonReply && buttonId === 'NO_CROP') {
+    if (session.state === 'INIT' || isGreeting) await onGreeting(phone, session, message);
+    else if (session.state === 'LANG_SENT' && isListReply) await onLangSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT' && isListReply) await onMenuSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT' && isButtonReply && buttonId === 'YES_CROP') await onMenuSelected(phone, session, { type: 'interactive', interactive: { list_reply: { id: 'CROP_PRICES' } } });
+    else if (session.state === 'MENU_SENT' && isButtonReply && buttonId === 'NO_CROP') {
       const lang = session.lang ?? 'en';
-      await sendText(phone, await t('Thank you for using Cropket Whatsapp Bot! Send "hi" anytime to check prices again. 🌾', lang));
+      await sendText(phone, getString('GOODBYE', lang));
       await clearSession(phone);
     }
-    else if (session.state === 'CROP_SENT'     && isListReply)                                await onCropSelected(phone, session, message);
-    else if (session.state === 'LOCATION_SENT' && isLocation)                                 await onLocation(phone, session, message);
+    else if (session.state === 'CROP_SENT' && isListReply) await onCropSelected(phone, session, message);
+    else if (session.state === 'LOCATION_SENT' && isLocation) await onLocation(phone, session, message);
     else logger.info('unhandled', { state: session.state, type: message.type, buttonId });
 
   } catch (err) {
     logger.error('handlePost failed', err.message);
     try {
-      const lang = session?.lang || 'en';
-      if (phone) await sendText(phone, await t(S.ERROR, lang));
+      if (phone) await sendText(phone, getString('ERROR', session?.lang ?? 'en'));
     } catch (e) {
       logger.error('failed to send error message', e.message);
     }
