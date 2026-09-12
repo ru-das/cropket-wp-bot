@@ -1,4 +1,4 @@
-import { getSession } from './session.js';
+import { getSession, clearSession } from './session.js';
 import { onGreeting } from './handlers/onGreeting.js';
 import { onLangSelected } from './handlers/onLangSelected.js';
 import { onMenuSelected } from './handlers/onMenuSelected.js';
@@ -44,20 +44,22 @@ export async function handlePost(req, res) {
     const isListReply   = message.type === 'interactive' && message.interactive?.type === 'list_reply';
     const isButtonReply = message.type === 'interactive' && message.interactive?.type === 'button_reply';
     const isLocation    = message.type === 'location';
+    const buttonId      = message.interactive?.button_reply?.id ?? '';
 
     logger.info('incoming', { phone, state: session.state, type: message.type, text });
 
-    if (session.state === 'INIT' || isGreeting)                                   await onGreeting(phone, session, message);
-    else if (session.state === 'LANG_SENT'     && isListReply)                    await onLangSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && isButtonReply) {
-      const buttonId = message.interactive?.button_reply?.id;
-      if (buttonId === 'YES_CROP') await onMenuSelected(phone, session, message);
-      else if (buttonId === 'NO_CROP') await sendText(phone, await t('Thank you for using Cropket Whatsapp Bot! Come back anytime. 🌾', session.lang ?? 'en'));
+    if (session.state === 'INIT' || isGreeting)                                               await onGreeting(phone, session, message);
+    else if (session.state === 'LANG_SENT'     && isListReply)                                await onLangSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT'     && isListReply)                                await onMenuSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT'     && isButtonReply && buttonId === 'YES_CROP')  await onMenuSelected(phone, session, { type: 'interactive', interactive: { list_reply: { id: 'CROP_PRICES' } } });
+    else if (session.state === 'MENU_SENT'     && isButtonReply && buttonId === 'NO_CROP') {
+      const lang = session.lang ?? 'en';
+      await sendText(phone, await t('Thank you for using Cropket Whatsapp Bot! Send "hi" anytime to check prices again. 🌾', lang));
+      await clearSession(phone);
     }
-    else if (session.state === 'MENU_SENT'     && isListReply)                    await onMenuSelected(phone, session, message);
-    else if (session.state === 'CROP_SENT'     && isListReply)                    await onCropSelected(phone, session, message);
-    else if (session.state === 'LOCATION_SENT' && isLocation)                     await onLocation(phone, session, message);
-    else logger.info('unhandled', { state: session.state, type: message.type });
+    else if (session.state === 'CROP_SENT'     && isListReply)                                await onCropSelected(phone, session, message);
+    else if (session.state === 'LOCATION_SENT' && isLocation)                                 await onLocation(phone, session, message);
+    else logger.info('unhandled', { state: session.state, type: message.type, buttonId });
 
   } catch (err) {
     logger.error('handlePost failed', err.message);
