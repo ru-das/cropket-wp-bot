@@ -29,7 +29,7 @@ export async function onMenuSelected(phone, session, message) {
     const chooseText = await t(S.CHOOSE_CROP, lang);
     await sendList(
       phone,
-      'AgriBot',
+      'Cropket Whatsapp Bot',
       chooseText,
       'Select',
       [{

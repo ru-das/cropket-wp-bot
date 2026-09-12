@@ -52,7 +52,7 @@ export async function handlePost(req, res) {
     else if (session.state === 'MENU_SENT'     && isButtonReply) {
       const buttonId = message.interactive?.button_reply?.id;
       if (buttonId === 'YES_CROP') await onMenuSelected(phone, session, message);
-      else if (buttonId === 'NO_CROP') await sendText(phone, await t('Thank you for using AgriBot! Come back anytime. 🌾', session.lang ?? 'en'));
+      else if (buttonId === 'NO_CROP') await sendText(phone, await t('Thank you for using Cropket Whatsapp Bot! Come back anytime. 🌾', session.lang ?? 'en'));
     }
     else if (session.state === 'MENU_SENT'     && isListReply)                    await onMenuSelected(phone, session, message);
     else if (session.state === 'CROP_SENT'     && isListReply)                    await onCropSelected(phone, session, message);

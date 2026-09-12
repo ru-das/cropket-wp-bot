@@ -9,7 +9,7 @@ export async function greetingComplete(phone, session) {
     const lang = session.lang;
     const menuText = await t(S.HOW_CAN_I_HELP, lang);
     const optionText = await t(S.CROP_PRICES_OPTION, lang);
-    await sendList(phone, 'AgriBot', menuText, 'Menu', [{
+    await sendList(phone, 'Cropket Whatsapp Bot', menuText, 'Menu', [{
       title: 'Options',
       rows: [{ id: 'CROP_PRICES', title: optionText }],
     }]);
@@ -31,7 +31,7 @@ export async function onGreeting(phone, session, message) {
     await sendText(phone, `${S.GREETING}\n\n${S.CHOOSE_LANG}`);
     await sendList(
       phone,
-      'AgriBot',
+      'Cropket Whatsapp Bot',
       S.CHOOSE_LANG,
       'Choose',
       [{

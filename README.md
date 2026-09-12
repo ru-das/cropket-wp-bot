@@ -1,4 +1,4 @@
-# AgriBot
+# Cropket Whatsapp Bot
 
 WhatsApp chatbot backend that helps Indian farmers check crop prices at nearby mandis in their native language. It runs as a Vercel serverless function, talks to the WhatsApp Cloud API, translates with Gemini, geocodes with OpenCage, and reads mandi prices from data.gov.in.
 
