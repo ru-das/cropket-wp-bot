@@ -1,4 +1,4 @@
-import { setSession } from '../session.js';
+import { setSession, clearSession } from '../session.js';
 import { sendText, sendList } from '../services/whatsapp.js';
 import { t } from '../services/translate.js';
 import { S, SUPPORTED_LANGUAGES } from '../utils/strings.js';
@@ -23,6 +23,7 @@ export async function greetingComplete(phone, session) {
 
 export async function onGreeting(phone, session, message) {
   try {
+    await clearSession(phone);
     const messageText = message.text?.body ?? '';
     logger.info('onGreeting called', { phone, messageText });
 

@@ -74,12 +74,9 @@ export async function onLocation(phone, session, message) {
     const priceMessage = await buildPriceMessage(mandis, session.crop, lang);
     await sendText(phone, priceMessage);
 
-    const another = await t(S.ANOTHER_CROP, lang);
-    const yesLabel = await t(S.YES, lang);
-    const noLabel = await t(S.NO, lang);
-    await sendButtons(phone, another, [
-      { id: 'YES', title: yesLabel.slice(0, 20) },
-      { id: 'NO', title: noLabel.slice(0, 20) },
+    await sendButtons(phone, await t(S.ANOTHER_CROP, lang), [
+      { id: 'YES_CROP', title: await t(S.YES, lang) },
+      { id: 'NO_CROP',  title: await t(S.NO, lang)  },
     ]);
 
     await setSession(phone, { state: 'MENU_SENT' });

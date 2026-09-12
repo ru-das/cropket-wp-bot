@@ -40,7 +40,7 @@ export async function handlePost(req, res) {
     session = await getSession(phone);
 
     const text          = message.text?.body?.trim() ?? '';
-    const isGreeting    = /^(hi|hello|hey|start|नमस्ते|হ্যালো|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
+    const isGreeting    = /^(hi|hello|hey|start|नमस्ते|नमस्कार|हेलो|हैलो|হ্যালো|নমস্কার|আসসালামু\s*আলাইকুম|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
     const isListReply   = message.type === 'interactive' && message.interactive?.type === 'list_reply';
     const isButtonReply = message.type === 'interactive' && message.interactive?.type === 'button_reply';
     const isLocation    = message.type === 'location';
@@ -49,7 +49,12 @@ export async function handlePost(req, res) {
 
     if (session.state === 'INIT' || isGreeting)                                   await onGreeting(phone, session, message);
     else if (session.state === 'LANG_SENT'     && isListReply)                    await onLangSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && (isListReply || isButtonReply)) await onMenuSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT'     && isButtonReply) {
+      const buttonId = message.interactive?.button_reply?.id;
+      if (buttonId === 'YES_CROP') await onMenuSelected(phone, session, message);
+      else if (buttonId === 'NO_CROP') await sendText(phone, await t('Thank you for using AgriBot! Come back anytime. 🌾', session.lang ?? 'en'));
+    }
+    else if (session.state === 'MENU_SENT'     && isListReply)                    await onMenuSelected(phone, session, message);
     else if (session.state === 'CROP_SENT'     && isListReply)                    await onCropSelected(phone, session, message);
     else if (session.state === 'LOCATION_SENT' && isLocation)                     await onLocation(phone, session, message);
     else logger.info('unhandled', { state: session.state, type: message.type });
