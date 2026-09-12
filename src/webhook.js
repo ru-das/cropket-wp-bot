@@ -25,14 +25,16 @@ export async function handleGet(req, res) {
 }
 
 export async function handlePost(req, res) {
-  res.status(200).end();
-
   let phone;
   let session;
 
   try {
     const message = req.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message) return;
+    
+    if (!message) {
+      res.status(200).end();
+      return;
+    }
 
     phone = message.from;
     session = await getSession(phone);
@@ -43,23 +45,26 @@ export async function handlePost(req, res) {
     const isButtonReply = message.type === 'interactive' && message.interactive?.type === 'button_reply';
     const isLocation    = message.type === 'location';
 
-    logger.info('incoming message', { phone, state: session.state, type: message.type, text });
+    logger.info('incoming', { phone, state: session.state, type: message.type, text });
 
-    if (session.state === 'INIT' || isGreeting)                                      await onGreeting(phone, session, message);
-    else if (session.state === 'LANG_SENT'     && isListReply)                       await onLangSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && (isListReply || isButtonReply))    await onMenuSelected(phone, session, message);
-    else if (session.state === 'CROP_SENT'     && isListReply)                       await onCropSelected(phone, session, message);
-    else if (session.state === 'LOCATION_SENT' && isLocation)                        await onLocation(phone, session, message);
-    else {
-      logger.info('unhandled state/type combo', { state: session.state, type: message.type });
-    }
+    if (session.state === 'INIT' || isGreeting)                                   await onGreeting(phone, session, message);
+    else if (session.state === 'LANG_SENT'     && isListReply)                    await onLangSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT'     && (isListReply || isButtonReply)) await onMenuSelected(phone, session, message);
+    else if (session.state === 'CROP_SENT'     && isListReply)                    await onCropSelected(phone, session, message);
+    else if (session.state === 'LOCATION_SENT' && isLocation)                     await onLocation(phone, session, message);
+    else logger.info('unhandled', { state: session.state, type: message.type });
+
   } catch (err) {
-    logger.error('handlePost routing failed', err);
+    logger.error('handlePost failed', err.message);
     try {
       const lang = session?.lang || 'en';
       if (phone) await sendText(phone, await t(S.ERROR, lang));
-    } catch (sendErr) {
-      logger.error('Failed to send apology', sendErr.message);
+    } catch (e) {
+      logger.error('failed to send error message', e.message);
     }
+  } finally {
+    // Always respond AFTER all async work is done
+    res.status(200).end();
   }
+}
 }
