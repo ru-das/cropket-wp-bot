@@ -15,14 +15,6 @@ const REQUIRED_KEYS = [
   'UPSTASH_REDIS_REST_TOKEN',
 ];
 
-const missing = REQUIRED_KEYS.filter((key) => !process.env[key]);
-
-if (missing.length > 0) {
-  throw new Error(
-    `Missing required environment variables: ${missing.join(', ')}. Copy .env.example to .env and fill in every key.`
-  );
-}
-
 export const config = {
   WHATSAPP_TOKEN: process.env.WHATSAPP_TOKEN,
   WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
