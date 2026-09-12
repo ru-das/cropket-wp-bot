@@ -4,7 +4,7 @@ import { logger } from '../utils/logger.js';
 const cache = new Map(); // key: "${lang}:${text}"
 
 const GEMINI_URL = () =>
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
 
 function extractText(res) {
   return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
@@ -19,9 +19,16 @@ export async function t(text, targetLang) {
   try {
     const prompt = `Translate the following text to the language with BCP-47 code "${targetLang}". Reply with ONLY the translated text — no explanation, no quotes, no preamble.\n\n${text}`;
 
-    const res = await axios.post(GEMINI_URL(), {
-      contents: [{ parts: [{ text: prompt }] }],
-    });
+    const res = await axios.post(
+      GEMINI_URL(),
+      { contents: [{ parts: [{ text: prompt }] }] },
+      {
+        headers: {
+          'x-goog-api-key': process.env.GEMINI_API_KEY,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
 
     const translation = extractText(res) || text;
     cache.set(key, translation);
@@ -47,9 +54,16 @@ export async function detectLang(text) {
   try {
     const prompt = `Detect the language of this text and reply with ONLY its BCP-47 language code (e.g. "hi", "bn", "en"). No explanation.\n\n${text}`;
 
-    const res = await axios.post(GEMINI_URL(), {
-      contents: [{ parts: [{ text: prompt }] }],
-    });
+    const res = await axios.post(
+      GEMINI_URL(),
+      { contents: [{ parts: [{ text: prompt }] }] },
+      {
+        headers: {
+          'x-goog-api-key': process.env.GEMINI_API_KEY,
+          'Content-Type': 'application/json',
+        },
+      },
+    );
 
     return extractText(res).toLowerCase() || 'en';
   } catch (err) {
