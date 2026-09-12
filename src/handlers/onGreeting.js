@@ -1,6 +1,6 @@
 import { setSession } from '../session.js';
 import { sendText, sendList } from '../services/whatsapp.js';
-import { t, detectLang } from '../services/translate.js';
+import { t } from '../services/translate.js';
 import { S, SUPPORTED_LANGUAGES } from '../utils/strings.js';
 import { logger } from '../utils/logger.js';
 
@@ -26,19 +26,7 @@ export async function onGreeting(phone, session, message) {
     const messageText = message.text?.body ?? '';
     logger.info('onGreeting called', { phone, messageText });
 
-    const detectedLang = await detectLang(messageText);
-    logger.info('detected lang', { phone, detectedLang });
-
-    const isSupported = SUPPORTED_LANGUAGES.some((l) => l.id === detectedLang);
-
-    if (isSupported) {
-      const updated = await setSession(phone, { lang: detectedLang });
-      await sendText(phone, await t(S.LANG_CONFIRMED, detectedLang));
-      await greetingComplete(phone, updated);
-      return;
-    }
-
-    // Language unknown — send greeting then a list of languages to pick from
+    // Always show language picker first — don't auto-skip
     await sendText(phone, `${S.GREETING}\n\n${S.CHOOSE_LANG}`);
     await sendList(
       phone,
