@@ -13,7 +13,7 @@ export const SUPPORTED_LANGUAGES = [
 
 // All user-facing strings in English — always passed through t() before sending
 export const S = {
-  GREETING:          "Hello! I'm AgriBot. I help farmers check crop prices at nearby mandis.",
+  GREETING:          "Hello! I'm Cropket Whatsapp Bot. I help farmers check crop prices at nearby mandis.",
   CHOOSE_LANG:       "Please choose your language to continue.",
   LANG_CONFIRMED:    "Got it! I'll reply in your language.",
   HOW_CAN_I_HELP:    "How can I help you today?",

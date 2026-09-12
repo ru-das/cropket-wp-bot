@@ -65,7 +65,7 @@ export async function sendFlow(to, flowId, flowToken, screenId, bodyText) {
       type: 'interactive',
       interactive: {
         type: 'flow',
-        header: { type: 'text', text: 'AgriBot' },
+        header: { type: 'text', text: 'Cropket Whatsapp Bot' },
         body: { text: bodyText },
         action: {
           name: 'flow',
