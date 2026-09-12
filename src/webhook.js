@@ -67,4 +67,3 @@ export async function handlePost(req, res) {
     res.status(200).end();
   }
 }
-}
