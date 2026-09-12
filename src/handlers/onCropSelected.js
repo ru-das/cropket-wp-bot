@@ -1,7 +1,6 @@
 import { setSession } from '../session.js';
 import { requestLocation } from '../services/whatsapp.js';
-import { t } from '../services/translate.js';
-import { S } from '../utils/strings.js';
+import { getString } from '../utils/strings.js';
 import { logger } from '../utils/logger.js';
 
 export async function onCropSelected(phone, session, message) {
@@ -19,7 +18,7 @@ export async function onCropSelected(phone, session, message) {
     await setSession(phone, { crop });
 
     const lang = session.lang ?? 'en';
-    const locationText = await t(S.SHARE_LOCATION, lang);
+    const locationText = getString('SHARE_LOCATION', lang);
     await requestLocation(phone, locationText);
 
     await setSession(phone, { state: 'LOCATION_SENT' });
