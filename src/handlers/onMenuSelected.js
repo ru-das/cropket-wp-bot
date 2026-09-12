@@ -1,32 +1,45 @@
-import { v4 as uuidv4 } from 'uuid';
 import { setSession } from '../session.js';
-import { sendText, sendFlow } from '../services/whatsapp.js';
+import { sendList } from '../services/whatsapp.js';
 import { t } from '../services/translate.js';
-import { S } from '../utils/strings.js';
+import { S, CROPS } from '../utils/strings.js';
 import { logger } from '../utils/logger.js';
 
 export async function onMenuSelected(phone, session, message) {
   try {
-    const listId = message.interactive?.list_reply?.id;
-    const buttonId = message.interactive?.button_reply?.id;
-    const selected = listId || buttonId;
+    const replyId = message.interactive?.list_reply?.id
+      ?? message.interactive?.button_reply?.id
+      ?? '';
+    logger.info('onMenuSelected called', { phone, replyId });
 
-    if (selected === 'NO') {
+    if (replyId !== 'CROP_PRICES') {
+      logger.info('unknown menu option', { replyId });
       return;
     }
 
-    if (selected !== 'CROP_PRICES' && selected !== 'YES') return;
+    const lang = session.lang ?? 'en';
 
-    const bodyText = await t(S.CHOOSE_CROP, session.lang);
-    await sendText(phone, bodyText);
-    await sendFlow(
-      phone,
-      process.env.CROP_FLOW_ID,
-      uuidv4(),
-      'CROP_SELECT',
-      bodyText
+    // Translate crop labels
+    const translatedCrops = await Promise.all(
+      CROPS.map(async (c) => ({
+        id: `CROP_${c.id}`,
+        title: await t(c.label, lang),
+      }))
     );
+
+    const chooseText = await t(S.CHOOSE_CROP, lang);
+    await sendList(
+      phone,
+      'AgriBot',
+      chooseText,
+      'Select',
+      [{
+        title: await t('Crops', lang),
+        rows: translatedCrops,
+      }]
+    );
+
     await setSession(phone, { state: 'CROP_SENT' });
+    logger.info('crop list sent', { phone });
   } catch (err) {
     logger.error('onMenuSelected failed', { phone, error: err.message });
     throw err;
