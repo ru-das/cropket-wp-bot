@@ -25,7 +25,7 @@ export async function handleGet(req, res) {
 }
 
 export async function handlePost(req, res) {
-  res.sendStatus(200);
+  res.status(200).end();
 
   let phone;
   let session;
