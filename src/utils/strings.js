@@ -9,7 +9,6 @@ export const SUPPORTED_LANGUAGES = [
   { id: 'kn', title: 'ಕನ್ನಡ'       },
   { id: 'ml', title: 'മലയാളം'      },
   { id: 'pa', title: 'ਪੰਜਾਬੀ'      },
-  { id: 'or', title: 'ଓଡ଼ିଆ'       },
 ];
 
 // All user-facing strings in English — always passed through t() before sending
