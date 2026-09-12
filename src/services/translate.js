@@ -10,33 +10,45 @@ function extractText(res) {
   return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? '';
 }
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function t(text, targetLang) {
   if (!targetLang || targetLang === 'en') return text;
 
   const key = `${targetLang}:${text}`;
   if (cache.has(key)) return cache.get(key);
 
-  try {
-    const prompt = `Translate the following text to the language with BCP-47 code "${targetLang}". Reply with ONLY the translated text — no explanation, no quotes, no preamble.\n\n${text}`;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const prompt = `Translate the following text to the language with BCP-47 code "${targetLang}". Reply with ONLY the translated text — no explanation, no quotes, no preamble.\n\n${text}`;
 
-    const res = await axios.post(
-      GEMINI_URL(),
-      { contents: [{ parts: [{ text: prompt }] }] },
-      {
-        headers: {
-          'x-goog-api-key': process.env.GEMINI_API_KEY,
-          'Content-Type': 'application/json',
+      const res = await axios.post(
+        GEMINI_URL(),
+        { contents: [{ parts: [{ text: prompt }] }] },
+        {
+          headers: {
+            'x-goog-api-key': process.env.GEMINI_API_KEY,
+            'Content-Type': 'application/json',
+          },
         },
-      },
-    );
+      );
 
-    const translation = extractText(res) || text;
-    cache.set(key, translation);
-    return translation;
-  } catch (err) {
-    logger.error('Translation failed, returning English', { targetLang, error: err.message });
-    return text;
+      const translation = extractText(res) || text;
+      cache.set(key, translation);
+      return translation;
+    } catch (err) {
+      if (err.response?.status === 429 && attempt < 3) {
+        await sleep(attempt * 1000);
+        continue;
+      }
+      logger.error('Translation failed, returning English', { targetLang, error: err.message });
+      return text;
+    }
   }
+
+  return text;
 }
 
 export async function tBatch(texts, targetLang) {
