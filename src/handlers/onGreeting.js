@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import { setSession } from '../session.js';
-import { sendText, sendList, sendFlow } from '../services/whatsapp.js';
+import { sendText, sendList } from '../services/whatsapp.js';
 import { t, detectLang } from '../services/translate.js';
 import { S, SUPPORTED_LANGUAGES } from '../utils/strings.js';
 import { logger } from '../utils/logger.js';
@@ -15,6 +14,7 @@ export async function greetingComplete(phone, session) {
       rows: [{ id: 'CROP_PRICES', title: optionText }],
     }]);
     await setSession(phone, { state: 'MENU_SENT' });
+    logger.info('greetingComplete done', { phone, lang });
   } catch (err) {
     logger.error('greetingComplete failed', { phone, error: err.message });
     throw err;
@@ -23,7 +23,12 @@ export async function greetingComplete(phone, session) {
 
 export async function onGreeting(phone, session, message) {
   try {
-    const detectedLang = await detectLang(message.text?.body ?? '');
+    const messageText = message.text?.body ?? '';
+    logger.info('onGreeting called', { phone, messageText });
+
+    const detectedLang = await detectLang(messageText);
+    logger.info('detected lang', { phone, detectedLang });
+
     const isSupported = SUPPORTED_LANGUAGES.some((l) => l.id === detectedLang);
 
     if (isSupported) {
@@ -33,15 +38,23 @@ export async function onGreeting(phone, session, message) {
       return;
     }
 
+    // Language unknown — send greeting then a list of languages to pick from
     await sendText(phone, `${S.GREETING}\n\n${S.CHOOSE_LANG}`);
-    await sendFlow(
+    await sendList(
       phone,
-      process.env.LANG_FLOW_ID,
-      uuidv4(),
-      'LANG_SELECT',
-      S.CHOOSE_LANG
+      'AgriBot',
+      S.CHOOSE_LANG,
+      'Choose',
+      [{
+        title: 'Languages',
+        rows: SUPPORTED_LANGUAGES.map((l) => ({
+          id: `LANG_${l.id}`,
+          title: l.title,
+        })),
+      }]
     );
     await setSession(phone, { state: 'LANG_SENT' });
+    logger.info('language list sent', { phone });
   } catch (err) {
     logger.error('onGreeting failed', { phone, error: err.message });
     throw err;

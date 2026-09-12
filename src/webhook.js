@@ -37,19 +37,22 @@ export async function handlePost(req, res) {
     phone = message.from;
     session = await getSession(phone);
 
-    const text       = message.text?.body?.trim() ?? '';
-    const isGreeting = /^(hi|hello|hey|start|नमस्ते|হ্যালো|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
-    const isNfmReply = message.type === 'interactive' && message.interactive?.type === 'nfm_reply';
-    const isListReply= message.type === 'interactive' && message.interactive?.type === 'list_reply';
+    const text          = message.text?.body?.trim() ?? '';
+    const isGreeting    = /^(hi|hello|hey|start|नमस्ते|হ্যালো|வணக்கம்|ನಮಸ್ಕಾರ|హలో)/i.test(text);
+    const isListReply   = message.type === 'interactive' && message.interactive?.type === 'list_reply';
     const isButtonReply = message.type === 'interactive' && message.interactive?.type === 'button_reply';
-    const isLocation = message.type === 'location';
+    const isLocation    = message.type === 'location';
 
-    if (session.state === 'INIT' || isGreeting)                      await onGreeting(phone, session, message);
-    else if (session.state === 'LANG_SENT'     && isNfmReply)        await onLangSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && isListReply)       await onMenuSelected(phone, session, message);
-    else if (session.state === 'MENU_SENT'     && isButtonReply)     await onMenuSelected(phone, session, message);
-    else if (session.state === 'CROP_SENT'     && isNfmReply)        await onCropSelected(phone, session, message);
-    else if (session.state === 'LOCATION_SENT' && isLocation)        await onLocation(phone, session, message);
+    logger.info('incoming message', { phone, state: session.state, type: message.type, text });
+
+    if (session.state === 'INIT' || isGreeting)                                      await onGreeting(phone, session, message);
+    else if (session.state === 'LANG_SENT'     && isListReply)                       await onLangSelected(phone, session, message);
+    else if (session.state === 'MENU_SENT'     && (isListReply || isButtonReply))    await onMenuSelected(phone, session, message);
+    else if (session.state === 'CROP_SENT'     && isListReply)                       await onCropSelected(phone, session, message);
+    else if (session.state === 'LOCATION_SENT' && isLocation)                        await onLocation(phone, session, message);
+    else {
+      logger.info('unhandled state/type combo', { state: session.state, type: message.type });
+    }
   } catch (err) {
     logger.error('handlePost routing failed', err);
     try {
